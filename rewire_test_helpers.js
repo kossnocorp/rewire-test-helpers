@@ -77,9 +77,17 @@ var RewireTestHelpers = {
    * });
    */
   rewired: function(target, overrides, fn) {
-    var restore = RewireTestHelpers.injectDependencies(target, overrides);
-    fn();
-    restore();
+    var restore = RewireTestHelpers.injectDependencies(target, overrides)
+
+    var result = fn()
+
+    // If result is promise then restore on resolve and return promise too
+    if (typeof Promise != 'undefined' && result instanceof Promise) {
+      return result.then(restore)
+
+    } else {
+      restore()
+    }
   }
 };
 
