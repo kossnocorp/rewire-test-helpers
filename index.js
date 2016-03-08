@@ -1,3 +1,5 @@
+/* global beforeEach, afterEach */
+
 // Set of helpers that helps easily inject dependencies using rewire.
 var RewireTestHelpers = {
   // Injects specified dependencies and returns restore function.
@@ -17,21 +19,20 @@ var RewireTestHelpers = {
   //   afterEach(function() {
   //     this.restore()
   //   })
-  //
-  injectDependencies: function(target, overrides) {
-    if (!target.__get__) {
-      throw 'Module must be required using rewire.'
+  injectDependencies: function (target, overrides) {
+    if (!rewireGet(target)) {
+      throw new Error('Module must be required using rewire.')
     }
 
     var originals = {}
-    Object.keys(overrides).forEach(function(privateName) {
-      originals[privateName] = target.__get__(privateName)
-      target.__set__(privateName, overrides[privateName])
-    });
+    Object.keys(overrides).forEach(function (privateName) {
+      originals[privateName] = rewireGet(target)(privateName)
+      rewireSet(target)(privateName, overrides[privateName])
+    })
 
-    return function() {
-      Object.keys(overrides).forEach(function(privateName) {
-        target.__set__(privateName, originals[privateName])
+    return function () {
+      Object.keys(overrides).forEach(function (privateName) {
+        rewireSet(target)(privateName, originals[privateName])
       })
     }
   },
@@ -43,19 +44,19 @@ var RewireTestHelpers = {
   // - (overrides, object): key is a module variable name,
   //   value is a new module value
   //
-  injectDependenciesFilter: function(target, overrides) {
+  injectDependenciesFilter: function (target, overrides) {
     var id = Math.random().toString()
 
-    beforeEach(function() {
+    beforeEach(function () {
       this.__rewireTestHelpers = this.__rewireTestHelpers || {}
       this.__rewireTestHelpers[id] =
         RewireTestHelpers.injectDependencies(target, overrides)
     })
 
-    afterEach(function() {
+    afterEach(function () {
       var restore = this.__rewireTestHelpers[id]
 
-      if (typeof restore == 'function') {
+      if (typeof restore === 'function') {
         restore()
       }
     })
@@ -86,20 +87,33 @@ var RewireTestHelpers = {
   //
   //   TODO:
   //
-  rewired: function(target, overrides, fn) {
+  rewired: function (target, overrides, fn) {
     var restore = RewireTestHelpers.injectDependencies(target, overrides)
-
     var result = fn()
 
     // If result is promise then restore on resolve and return promise too
-    if (typeof Promise != 'undefined' && result instanceof Promise) {
+    if (typeof Promise !== 'undefined' && result instanceof Promise) {
       return result.then(restore)
-
     } else {
       restore()
     }
   }
 }
 
-module.exports = RewireTestHelpers
+function rewireGet (obj) {
+  return obj && obj.__get__ ||
+    obj.__GetDependency__ ||
+      // When glob import is passed as an argument, the object itself won't
+      // have rewire API
+    (obj.default && obj.default.__GetDependency__)
+}
 
+function rewireSet (obj) {
+  return obj && obj.__set__ ||
+    obj.__Rewire__ ||
+      // When glob import is passed as an argument, the object itself won't
+      // have rewire API
+    (obj.default && obj.default.__Rewire__)
+}
+
+module.exports = RewireTestHelpers
