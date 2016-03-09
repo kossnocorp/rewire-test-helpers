@@ -4,14 +4,14 @@
 var RewireTestHelpers = {
   // Injects specified dependencies and returns restore function.
   //
-  // - (target, object) - any module required with rewire.
-  // - (overrides, object): key is a module variable name,
+  // - (obj, object) - any module required with rewire.
+  // - (overridesMap, object): key is a module variable name,
   //   value is a new module value
   //
   // Resturns restore function.
   //
   //   beforeEach(function() {
-  //     this.restore = RewireTestHelpers.injectDependencies(SideNavigation, {
+  //     this.restore = RewireTestHelpers.rewireMap(SideNavigation, {
   //       Link: DummyLink
   //     })
   //   })
@@ -19,20 +19,20 @@ var RewireTestHelpers = {
   //   afterEach(function() {
   //     this.restore()
   //   })
-  injectDependencies: function (target, overrides) {
-    if (!rewireGet(target)) {
+  rewireMap: function (obj, overridesMap) {
+    if (!rewireGet(obj)) {
       throw new Error('Module must be required using rewire.')
     }
 
     var originals = {}
-    Object.keys(overrides).forEach(function (privateName) {
-      originals[privateName] = rewireGet(target)(privateName)
-      rewireSet(target)(privateName, overrides[privateName])
+    Object.keys(overridesMap).forEach(function (privateName) {
+      originals[privateName] = rewireGet(obj)(privateName)
+      rewireSet(obj)(privateName, overridesMap[privateName])
     })
 
     return function () {
-      Object.keys(overrides).forEach(function (privateName) {
-        rewireSet(target)(privateName, originals[privateName])
+      Object.keys(overridesMap).forEach(function (privateName) {
+        rewireSet(obj)(privateName, originals[privateName])
       })
     }
   },
@@ -40,17 +40,17 @@ var RewireTestHelpers = {
   // Inject specified dependencies in beforeEach filter and restore them in
   // afterEach.
   //
-  // - (target, object): module to extend, must be imported with rewire
-  // - (overrides, object): key is a module variable name,
+  // - (obj, object): module to extend, must be imported with rewire
+  // - (overridesMap, object): key is a module variable name,
   //   value is a new module value
   //
-  injectDependenciesFilter: function (target, overrides) {
+  rewireFilter: function (obj, overridesMap) {
     var id = Math.random().toString()
 
     beforeEach(function () {
       this.__rewireTestHelpers = this.__rewireTestHelpers || {}
       this.__rewireTestHelpers[id] =
-        RewireTestHelpers.injectDependencies(target, overrides)
+        RewireTestHelpers.rewireMap(obj, overridesMap)
     })
 
     afterEach(function () {
@@ -67,8 +67,8 @@ var RewireTestHelpers = {
   //
   // When passed function returns promise, rewired also returns promise.
   //
-  // - (target, object): module to extend, must be imported with rewire
-  // - (overrides, object): key is a module variable name,
+  // - (obj, object): module to extend, must be imported with rewire
+  // - (overridesMap, object): key is a module variable name,
   //   value is a new module value
   // - (fn, function): function to be called
   //
@@ -87,8 +87,8 @@ var RewireTestHelpers = {
   //
   //   TODO:
   //
-  rewired: function (target, overrides, fn) {
-    var restore = RewireTestHelpers.injectDependencies(target, overrides)
+  rewired: function (obj, overridesMap, fn) {
+    var restore = RewireTestHelpers.rewireMap(obj, overridesMap)
     var result = fn()
 
     // If result is promise then restore on resolve and return promise too

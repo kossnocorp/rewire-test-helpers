@@ -5,17 +5,17 @@ import RewireTestHelpers from '../../..'
 import module from './module'
 
 describe('Sytem tests for babel-plugin-rewire API against ES 2015 modules', function () {
-  describe('injectDependencies', function () {
+  describe('rewireMap', function () {
     it('overrides passed properties and returns a function that restores them', function () {
-      var restore = RewireTestHelpers.injectDependencies(module, {a: 1, b: 2})
+      var restore = RewireTestHelpers.rewireMap(module, {a: 1, b: 2})
       assert.deepEqual(module(), [1, 2, 'C'])
       restore()
       assert.deepEqual(module(), ['A', 'B', 'C'])
     })
   })
 
-  describe('injectDependenciesFilter', function () {
-    RewireTestHelpers.injectDependenciesFilter(module, {a: 1, b: 2})
+  describe('rewireFilter', function () {
+    RewireTestHelpers.rewireFilter(module, {a: 1, b: 2})
 
     afterEach(function () {
       assert.deepEqual(module(), ['A', 'B', 'C'], "Properties weren't restored in afterEach filter")

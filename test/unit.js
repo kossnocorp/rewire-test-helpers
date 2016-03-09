@@ -5,44 +5,44 @@ var sinon = require('sinon')
 var RewireTestHelpers = require('..')
 
 describe('RewireTestHelpers', function () {
-  describe('injectDependencies', function () {
+  describe('rewireMap', function () {
     context('when rewire API is not defined', function () {
       it('throws an error', function () {
         assert.throws(function () {
-          RewireTestHelpers.injectDependencies({}, {})
+          RewireTestHelpers.rewireMap({}, {})
         }, /Module must be required using rewire./)
       })
     })
 
-    function testInjectDependenciesAgainst (apiVersion) {
+    function testRewireMapAgainst (apiVersion) {
       it('overrides passed properties', function () {
         var obj = getObj(apiVersion)
-        RewireTestHelpers.injectDependencies(obj, {b: 2, c: 3})
+        RewireTestHelpers.rewireMap(obj, {b: 2, c: 3})
         assert(sinon.match({a: 'A', b: 2, c: 3}).test(obj))
       })
 
       it('returns a function that restores overriden properties', function () {
         var obj = getObj(apiVersion)
-        var restoreObj = RewireTestHelpers.injectDependencies(obj, {b: 2, c: 3})
+        var restoreObj = RewireTestHelpers.rewireMap(obj, {b: 2, c: 3})
         restoreObj()
         assert(sinon.match({a: 'A', b: 'B', c: 'C'}).test(obj))
       })
     }
 
     context('when original rewire API is defined', function () {
-      testInjectDependenciesAgainst('original')
+      testRewireMapAgainst('original')
     })
 
     context('when babel-plugin-rewire API is defined', function () {
-      testInjectDependenciesAgainst('babel_plugin')
+      testRewireMapAgainst('babel_plugin')
 
       context('when glob import (import * as ...) is rewired', function () {
-        testInjectDependenciesAgainst('babel_plugin_glob')
+        testRewireMapAgainst('babel_plugin_glob')
       })
     })
   })
 
-  describe('injectDependenciesFilter', function () {
+  describe('rewireFilter', function () {
     function redefineFilters (fn) {
       var _beforeEach = global.beforeEach
       var _afterEach = global.afterEach
@@ -56,7 +56,7 @@ describe('RewireTestHelpers', function () {
     context('when rewire API is not defined', function () {
       it('throws an error on beforeEach', function () {
         redefineFilters(function () {
-          RewireTestHelpers.injectDependenciesFilter({}, {})
+          RewireTestHelpers.rewireFilter({}, {})
           assert.throws(function () {
             global.beforeEach.args[0][0]()
           }, /Module must be required using rewire./)
@@ -64,11 +64,11 @@ describe('RewireTestHelpers', function () {
       })
     })
 
-    function testInjectDependenciesFilterAgainst (apiVersion) {
+    function testRewireFilterAgainst (apiVersion) {
       it('overrides passed properties on beforeEach', function () {
         redefineFilters(function () {
           var obj = getObj(apiVersion)
-          RewireTestHelpers.injectDependenciesFilter(obj, {b: 2, c: 3})
+          RewireTestHelpers.rewireFilter(obj, {b: 2, c: 3})
           assert(sinon.match({a: 'A', b: 'B', c: 'C'}).test(obj))
           global.beforeEach.args[0][0]()
           assert(sinon.match({a: 'A', b: 2, c: 3}).test(obj))
@@ -78,7 +78,7 @@ describe('RewireTestHelpers', function () {
       it('restores overriden properties on afterEach', function () {
         redefineFilters(function () {
           var obj = getObj(apiVersion)
-          RewireTestHelpers.injectDependenciesFilter(obj, {b: 2, c: 3})
+          RewireTestHelpers.rewireFilter(obj, {b: 2, c: 3})
           var context = {}
           global.beforeEach.args[0][0].call(context)
           global.afterEach.args[0][0].call(context)
@@ -88,14 +88,14 @@ describe('RewireTestHelpers', function () {
     }
 
     context('when original rewire API is defined', function () {
-      testInjectDependenciesFilterAgainst('original')
+      testRewireFilterAgainst('original')
     })
 
     context('when babel-plugin-rewire API is defined', function () {
-      testInjectDependenciesFilterAgainst('babel_plugin')
+      testRewireFilterAgainst('babel_plugin')
 
       context('when glob import (import * as ...) is rewired', function () {
-        testInjectDependenciesFilterAgainst('babel_plugin_glob')
+        testRewireFilterAgainst('babel_plugin_glob')
       })
     })
   })
