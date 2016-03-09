@@ -4,7 +4,7 @@ var assert = require('power-assert')
 var RewireTestHelpers = require('../../..')
 var module = require('./module')
 
-describe('Sytem tests for original rewire API', function () {
+describe('Sytem tests for babel-plugin-rewire API against ES5 modules', function () {
   describe('injectDependencies', function () {
     it('overrides passed properties and returns a function that restores them', function () {
       var restore = RewireTestHelpers.injectDependencies(module, {a: 1, b: 2})
