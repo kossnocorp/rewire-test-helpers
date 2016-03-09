@@ -125,6 +125,12 @@ describe('RewireTestHelpers', function () {
       })
 
       context('when passed body function returns a promise', function () {
+        it('returns the promise', function (done) {
+          RewireTestHelpers.rewired(getObj(apiVersion), {b: 2, c: 3}, function () {
+            return Promise.resolve()
+          }).then(done)
+        })
+
         it('restores overriden properties only when promise is resolved', function (done) {
           var obj = getObj(apiVersion)
           RewireTestHelpers.rewired(obj, {b: 2, c: 3}, function () {
